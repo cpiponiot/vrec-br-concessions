@@ -78,12 +78,12 @@ for (i in (ncol(Mt1)+1):max(ceiling(tsim/predicAm$trot))){
 
 rm(DT)
 
-save(Mt1, MvextReal, Mom1, Mom2, MomR, file="trajectMatrices.Rdata")
+save(Mt1, MvextReal, Mom1, Mom2, MomR, file="cache/trajectMatrices.Rdata")
 
 
 #### calculate volume trajectories #### 
 
-load("trajectMatrices.Rdata")
+load("cache/trajectMatrices.Rdata")
 
 predicAm$scenario <- paste("vext =",predicAm$vext, "; trot =",predicAm$trot)
 

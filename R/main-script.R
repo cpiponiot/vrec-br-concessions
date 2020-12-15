@@ -1,5 +1,5 @@
 ## load packages
-packages_needed <- c("raster", "sp", "data.table", "truncdist", "gstat")
+packages_needed <- c("raster", "sp", "data.table", "truncdist", "gstat", "rgdal")
 packages_to_install <- packages_needed[!( packages_needed %in% rownames(installed.packages()))]
 if (length(packages_to_install) > 0)
   install.packages(packages_to_install)
@@ -25,19 +25,31 @@ paramsPropRecru <- read.csv("data/paramsPropRecru.csv")
 # spatially explicit variables from FORMIND
 paramsFormind <- read.csv("data/paramsFormind.csv")
 
-# area available for logging
+# open spatial variables
 grd <- read.csv("data/spatVariables.csv", stringsAsFactors = F)
 coordinates(grd) <- ~ longitude+latitude
 gridded(grd) <- TRUE
 proj4string(grd) <- CRS("+proj=longlat")
 
+## concessions shapefiles 
+### add here!
+## area available for logging
+concessions <- readOGR(dsn = "data/amazonia", layer = "test")
+ext2 <- round(extent(raster_concessions2)) + c(-0.5, 0.5, -0.5, 0.5)
+rst <- raster(resolution = 0.01, ext = ext2)
+raster_concessions <- rasterize(concessions, rst)
+raster_concessions2 <- !is.na(raster_concessions)
+raster_concessions3 <- aggregate(raster_concessions2, fact = 100)
+
+grd$pconcession <- raster::extract(raster_concessions3,grd)
+grd$pconcession[is.na(grd$pconcession)] <- 0
+
 ## total area of pixels (in km2)
 areaTot <- raster::extract(area(raster(grd)), grd)
 ## total area available for logging (in ha)
-grd$areaLogging <- areaTot*grd$pAreaLogging*100  ## km2 -> ha
+# grd$areaLogging <- areaTot*grd$pAreaLogging*100  ## km2 -> ha
+grd$areaLogging <- areaTot*grd$pconcession*100  ## km2 -> ha
 
-## concessions shapefiles 
-### add here!
 
 ### inputs ####
 ## number of simulations
@@ -61,4 +73,4 @@ rm(list=setdiff(ls(), c("predictions", "tsim")))
 source("R/functions.R")
 
 source("R/predictionsTrajectory.R")
-
+save(predicAm, file = "cache/predictions.Rdata")
